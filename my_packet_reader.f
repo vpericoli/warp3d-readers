@@ -18,12 +18,14 @@ c
 c
 c
 c
-      double precision saved_dp1, saved_dp2, saved_dp3
-      integer packet_file_no /1/, screen /6/, key /5/,
-     &        results_file_no /2/, saved_step, saved_int1,
-     &                             saved_int2, saved_int3
-      character * 80 packet_file_name, results_file_name
-      logical ou_packet_control(30), debug
+      double precision :: saved_dp1, saved_dp2, saved_dp3
+      integer
+     &    packet_file_no /1/, screen /6/, key /5/,
+     &    results_file_no /2/, saved_step, saved_int1,
+     &    saved_int2, saved_int3, arg_packet_no
+      character(len=80) :: packet_file_name, results_file_name
+      logical :: 
+     &   ou_packet_control(30), interactive_mode, debug
 c
 c
 c
@@ -59,6 +61,7 @@ c                   open packet file, and obtain the desired
 c                   packet types from the user.
 c
 c
+      call get_cmd_args
       call init
       call get_packet_type
 c
@@ -169,6 +172,92 @@ c
 c
 c **********************************************************************
 c *                                                                    *
+c *     subroutine: get_cmd_args                                       *
+c *                                                                    *
+c *     obtains the command line arguments                             *
+c *                                                                    *
+c **********************************************************************
+c
+c
+      subroutine get_cmd_args
+c
+      use pvars, only: screen, packet_file_name, results_file_name,
+     &                 interactive_mode, arg_packet_no
+      implicit none
+c
+      integer :: i, ios, nargin, arglen, argstat
+      character(len=80) :: dummyarg
+      logical :: local_debug
+c
+      local_debug = .false.
+c
+c                   get and check command line arguments.
+c                   note that command_argument_count() and
+c                   get_command_argument() are Fortran 2003
+c                   standard functions.
+c
+c
+      interactive_mode = .true. 
+      nargin = command_argument_count()
+      if ( nargin .eq. 0 ) return
+      if ( nargin .ne. 3 ) call die_abort_invalid_args
+c
+c       if 3 args, try to obtain them
+c
+      do i = 1,3
+        call get_command_argument(i, dummyarg, arglen, argstat)
+        if ( argstat .ne. 0 ) call die_abort_invalid_args
+        call stripf( dummyarg )
+c
+        select case ( i )
+        case (1)
+c         requested packet number.
+c         must convert this char into integer
+          read(dummyarg(1:3),'(i3)',iostat=argstat) arg_packet_no
+          if ( argstat .ne. 0 ) call die_abort_invalid_args
+        case (2)
+c         packet file to read.
+          packet_file_name(1:) = dummyarg(1:)
+        case (3)
+c         results file to write.
+          results_file_name(1:) = dummyarg(1:)
+        end select
+      end do
+c
+c     if this has run successfully, 
+c     turn off interactive_mode and return.
+c
+      interactive_mode = .false.
+      return
+c
+      end subroutine get_cmd_args
+c
+c
+c
+c **********************************************************************
+c *                                                                    *
+c *     subroutine: die_abort_invalid_args                             *
+c *                                                                    *
+c *     throws error and exists                                        *
+c *                                                                    *
+c **********************************************************************
+c
+      subroutine die_abort_invalid_args
+      use pvars, only: screen
+      implicit none
+c     
+      write(screen,9999)
+      stop 1
+c     
+ 9999 format(">>>> ERROR: invalid command line arguments.", 
+     &       "            try again or re-run without arguments ",
+     &       "            for interactive mode.")
+      end subroutine die_abort_invalid_args
+c
+c
+c
+c **********************************************************************
+c *                                                                    *
 c *     subroutine: init                                               *
 c *                                                                    *
 c *     initializes variables, gets packet file name from user, and    *
@@ -178,10 +267,13 @@ c **********************************************************************
 c
 c
       subroutine init
-      use pvars, only: screen,key,packet_file_no,
-     &        packet_file_name,ou_packet_control,debug
+c
+      use pvars, only: screen, key, packet_file_no,
+     &                 packet_file_name, ou_packet_control, 
+     &                 debug, interactive_mode
       implicit none
-      integer ios
+      integer :: ios, nargin, arglen, argstat
+      character(len=80) :: dummyarg
 c
 c
 c                   ou_packet_control is an array of logical
@@ -198,27 +290,44 @@ c
       write(screen,9000)
 c
 c
+c                   if interactive mode, get filename from user.
 c                   loop until a valid packet file is given
 c                   and opened.
 c
+c                   if not interactive mode, try to open the 
+c                   provided packet file
 c
-      do
-        write(screen,9010)
-        read(key,9020) packet_file_name
-        call stripf( packet_file_name )
-        if ( packet_file_name(1:1) .eq. ' ' ) then
-            packet_file_name(1:) = 'packet.out.1'
-        end if
+c
+      if ( interactive_mode ) then 
+        do
+          write(screen,9010)
+          read(key,9020) packet_file_name
+          call stripf( packet_file_name )
+          if ( packet_file_name(1:1) .eq. ' ' ) then
+              packet_file_name(1:) = 'packet.out.1'
+          end if
+          open(unit=packet_file_no, file=packet_file_name, status='old',
+     &          access='sequential', form='unformatted',
+     &          position='rewind', iostat=ios)
+          if( ios .ne. 0)then
+             write(screen,9030)
+          else
+             write(screen,9040)
+             exit
+          end if
+        end do
+c
+      else ! if not interactive_mode
         open( unit=packet_file_no, file=packet_file_name, status='old',
      &        access='sequential', form='unformatted',
      &        position='rewind', iostat=ios)
-        if( ios .ne. 0)then
-           write(screen,9030)
+        if ( ios .ne. 0 ) then
+          write(screen,9030) ! invalid packet file
+          call die_abort_invalid_args ! die_abort
         else
-           write(screen,9040)
-           exit
+          write(screen,9040) ! valid packet file opened
         end if
-      end do
+      end if
 c
       return
 c
@@ -228,7 +337,7 @@ c
      &  /,   ' *                                                  *',
      &  /,   ' *   WARP3D Packet Reader (MODIFIED BY VSP)         *',
      &  /,   ' *                                                  *',
-     &  /,   ' *             Last updated: 08-25-2017             *',
+     &  /,   ' *             Last updated: 08-28-2017             *',
      &  /,   ' *                                                  *',
      &  /,   ' *                                                  *',
      &  /,   ' ****************************************************'
@@ -301,8 +410,8 @@ c **********************************************************************
 c
       subroutine get_packet_type
 c
-      use pvars, only: screen,key,packet_file_no,
-     &                 ou_packet_control     
+      use pvars, only: screen, key, packet_file_no, ou_packet_control,
+     &                 interactive_mode, arg_packet_no
       implicit none
 c
       character(len=1) :: y_or_n
@@ -313,46 +422,58 @@ c
       additional_packets_needed = .true.
       valid_packet_no = .true.
 c
-c
+c                   if interactive_mode, 
 c                   loop asks user what type of packet is
 c                   desired, repeats until all deired packets
 c                   have been recorded.
 c
 c
-      do
-         write(screen,9000)
-         valid_packet_no=.true.
-         do
-           read(key,9100)output_packet_no
-           if(output_packet_no .gt. 32 .or.
-     &        output_packet_no .lt. 0)then
-                write(screen,9200)
-                write(screen,9300)
-           else
-                call is_packet_implemented(output_packet_no,
-     &                                valid_packet_no)
-                if(valid_packet_no)then
-                   write(screen,9300)
-                else
-                   exit
-                end if
-           end if
-         end do
-c
-         ou_packet_control(output_packet_no)=.true.
-c
-c        remove ability to request multiple packets,
-c        because this will mess up the python reader.
-c        just exit loop.
-        exit
-c
-C          write(screen,9400)
-C          read(key,9500)y_or_n
-C          if(y_or_n .eq. 'N' .or.
-C      &      y_or_n .eq. 'n' .or.
-C      &      y_or_n .eq. ' ')exit
-c
-      end do
+      if ( interactive_mode ) then 
+        do
+           write(screen,9000)
+           valid_packet_no=.true.
+           do
+             read(key,9100)output_packet_no
+             if(output_packet_no .gt. 32 .or.
+     &          output_packet_no .lt. 0)then
+                  write(screen,9200) output_packet_no
+                  write(screen,9300)
+             else
+                  call is_packet_implemented(output_packet_no,
+     &                                  valid_packet_no)
+                  if(.not. valid_packet_no)then
+                     write(screen,9300)
+                  else
+                     exit
+                  end if
+             end if
+           end do
+c       
+           ou_packet_control(output_packet_no)=.true.
+c       
+c          remove ability to request multiple packets,
+c          because this will mess up the python reader.
+c          just exit loop.
+          exit
+c       
+C            write(screen,9400)
+C            read(key,9500)y_or_n
+C            if(y_or_n .eq. 'N' .or.
+C        &      y_or_n .eq. 'n' .or.
+C        &      y_or_n .eq. ' ')exit
+c       
+        end do
+      else ! if not interactive_mode
+        if( arg_packet_no .gt. 32 .or.
+     &      arg_packet_no .lt. 0) then
+             write(screen,9200) arg_packet_no
+             call die_abort_invalid_args
+        else 
+             call is_packet_implemented(arg_packet_no, valid_packet_no)
+             if(.not.valid_packet_no) call die_abort_invalid_args
+             ou_packet_control(arg_packet_no)=.true.
+        end if
+      end if
 c
       return
 c
@@ -366,7 +487,7 @@ c
      &       /,1x,'>> see Dodds packet_reader.f for other packets.',
      &       /,1x,'>> Enter desired packet number: ',$)
  9100 format(i3)
- 9200 format(/,1x,'>> ERROR: Invalid packet number',
+ 9200 format(/,1x,'>> ERROR: Invalid packet number ', i3, 
      &       /,1x,'>>        Pick a valid packet number')
  9300 format(/,1x,'>> Enter desired packet number: ',$)
  9400 format(/,1x,'>> Are additional packets desired?',
@@ -404,7 +525,7 @@ c
       select case ( number )
 c
         case ( 31, 32 )
-          control = .false.
+          control = .true.
 c       
         case default
           write(screen,1000) number
@@ -434,27 +555,40 @@ c **********************************************************************
 c
 c
       subroutine open_output_file
-      use pvars, only: screen, results_file_name, results_file_no, key
+      use pvars, only: screen, results_file_name, results_file_no, key, 
+     &                 interactive_mode
       implicit none
 c
       integer ios
 c
-      do
-        write(screen,9010)
-        read(key,9020) results_file_name
-        call stripf( results_file_name )
-        if ( results_file_name(1:1) .eq. ' ' ) then
-            results_file_name(1:) = 'results.out.1'
-        end if
+      if ( interactive_mode ) then 
+        do
+          write(screen,9010)
+          read(key,9020) results_file_name
+          call stripf( results_file_name )
+          if ( results_file_name(1:1) .eq. ' ' ) then
+              results_file_name(1:) = 'results.out.1'
+          end if
+          open( unit=results_file_no, file=results_file_name,
+     &          status='replace',iostat=ios)
+          if( ios .ne. 0)then
+             write(screen,9030)
+          else
+             write(screen,9040)
+             exit
+          end if
+        end do
+c
+      else ! not interactive_mode
         open( unit=results_file_no, file=results_file_name,
-     &        status='replace',iostat=ios)
-        if( ios .ne. 0)then
-           write(screen,9030)
+     &        status='replace', iostat=ios )
+        if( ios .ne. 0 ) then
+          write(screen,9030)
+          call die_abort_invalid_args
         else
-           write(screen,9040)
-           exit
+          write(screen,9040)
         end if
-      end do
+      end if
 c
       return
 c
