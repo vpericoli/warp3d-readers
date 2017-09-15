@@ -15,19 +15,74 @@ This is quick and dirty.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # imports
 #
-import os, numpy, scipy.io
+import os, numpy, scipy.io, subprocess
 from reverse_readline import *
 
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# class
+# classes
 #
+class warpBinaryPacketFile(object):
+    def __init__(self, packetfile="binary_packets.out"):
+        self.packetfile = packetfile
+        return
+    
+    @property
+    def packet_reader(self):
+        return "C:\\warp3d-vpdev\\warp3d-vpdev\\packet_dir\\my_packet_reader.exe"
+    
+    def __str_space_assemble(self,items):
+        s = ""
+        for item in items:
+            s += " " + str(item)
+        return s
+    
+    def translate_CZM(self):
+        self.translate(packetno=31,transfile="czm_tractions.out")
+        self.translate(packetno=32,transfile="czm_displacements.out")
+        return
+        
+    def translate(self, packetno, transfile):
+        # check args
+        if not (type(packetno) == int):
+            raise TypeError("packetno must be an integer")
+        if not (type(transfile) in (str,unicode)):
+            raise TypeError("transfile must be a string")
+        if len(transfile) > 80:
+            raise RuntimeError("transfile name is too long (invalid)")
+        # assemble and execute
+        args = [packetno, self.packetfile, transfile]
+        args = self.__str_space_assemble(args)
+        subprocess.check_call(self.packet_reader + args, shell=True)
+        return
+    
+
 class warpBinaryTranslatedOutput(object):
 
     #
     # init
     #
-    def __init__(self, read_file):
+    def __init__(self, read_file=None, czm_data=None):
+        
+        # check args
+        if (czm_data is None) and (read_file is None):
+            raise TypeError("read_file and czm_data are both None.")
+        elif (czm_data is not None) and (read_file is not None):
+            raise TypeError("both read_file and czm_data cannot be set independently.")
+            
+        # assign default CZM stuff
+        if czm_data is None:
+            col_names = None
+        elif czm_data in "tractions":
+            read_file = "czm_tractions.out" # hard coded in warpBinaryPacketFile()
+            col_names = "[shear1, shear2, eff. shear, normal, gamma, gamma_ur]"
+        elif czm_data in "displcaments":
+            read_file = "czm_displacements.out" # hard coded in warpBinaryPacketFile()
+            col_names = "[shear1, shear2, shear, normal]"
+        
+        # set read file, col_names
+        self.read_file = read_file
+        self.col_names = col_names
         
         # initialize self storage variables
         self.data      = None
@@ -37,9 +92,6 @@ class warpBinaryTranslatedOutput(object):
         self.elem_list = None
         self.nintpts   = None
         self.eindex    = None
-        
-        # set read file
-        self.read_file = read_file
         
         # get problem size info
         self.getNumSteps()
@@ -133,8 +185,9 @@ class warpBinaryTranslatedOutput(object):
         numel  = self.nelems
         nips   = self.nintpts
         
-        # preallocate
+        # preallocate; set "access info" for user
         data = numpy.zeros([nsteps,ncols,numel,nips],dtype=numpy.float64)
+        self.access = "[step, col, elem, int.pt.]"
         
         # fetch data
         with open(self.read_file,'rb') as fObj:
