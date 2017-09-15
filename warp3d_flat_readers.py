@@ -72,12 +72,12 @@ class warpFlatOutputHelpers(object):
     #
     def _getNumSteps(self, dirpath):
         """ obtain the number of steps """
-        outid  = self._outputFilenameIdentifier()
-        outfmt = self.outputFormatType()
-        nfout = len(fnmatch.filter(os.listdir(dirpath), outid + '*_' + outfmt))
+        template = self._outputFilenameTemplate()
+        template = template.replace("{:05d}","*")
+        nfout = len(fnmatch.filter(os.listdir(dirpath), template))
         if (nfout == 0):
             raise RuntimeError("no output found")
-        return num_steps
+        return nfout
     
     def _getNumNodesElems(self, filepath):
         """ given input file or woutput, obtain number of nodes and elements """
@@ -105,8 +105,9 @@ class warpFlatOutputHelpers(object):
     
     def _outputFilenameTemplate(self):
         """ filename format template """
-        fmt = self.outputFormatType()
-        template_dict = {"reaction"       : "wnr{:05d}_" + fmt,
+        fmt = self.outputFormatType
+        template_dict = {"stress"         : "wes{:05d}_" + fmt,
+                         "reaction"       : "wnr{:05d}_" + fmt,
                          "displacement"   : "wnd{:05d}_" + fmt,
                          "cohesive_state" : "wem{:05d}_" + fmt + "_cohesive"}
         if not (self.output_type in template_dict.keys()):
@@ -125,8 +126,10 @@ class warpFlatOutputHelpers(object):
     def writeCSVOutput(self, filename, header, array):
         # need headers, iterable of arrays, step numbers
         # arrays are populated. write to CSV
-        nsteps = array.shape[0]
-        ncols  = array.shape[1]
+        
+        array = numpy.squeeze(array)
+        nsteps,ncols = array.shape
+        
         write_num_template = self.writeNumTemplate
         
         with open(filename,"wb") as fObj:
@@ -141,7 +144,7 @@ class warpFlatOutputHelpers(object):
                 strlist = []
                 for c in range(0,ncols):
                     strlist.append(write_num_template.format(array[i,c]))
-                write_string = composeWriteString(strlist)
+                write_string = self._composeCSVString(strlist)
                 
                 # write
                 fObj.write(write_string)
@@ -157,24 +160,34 @@ class warpTextOutput(warpFlatOutputHelpers):
     def __init__(self, output_dir, output_type, obj_nums, data_cols):
         # get templates, allocate numpy arrays, 
         
-        self.output_dir  = output_dir
-        self.output_type = output_type
-        self.obj_nums    = obj_nums
-        self.data_index  = data_col - 1
+        self.output_dir   = output_dir
+        self.output_type  = output_type
+        self.obj_nums     = obj_nums
+        
+        # set python index (col 1 ==> index 0)
+        if type(data_cols) == int:
+            data_cols = (data_cols,)
+        self.data_indices = [(i - 1) for i in data_cols]
         
         # initialize
+        self.ndata  = len(self.data_indices)
         self.nsteps = self._getNumSteps(self.output_dir)
         self.stepfile_template = self._outputFilenameTemplate()
         
         # preallocate
-        self.output = numpy.zeros([self.nsteps,self.nobjs], dtype=numpy.float64)
-        
+        self._output = numpy.zeros( [self.nsteps,self.nobjs,self.ndata], 
+                                     dtype=numpy.float64 )
         # execute
         self.getOutput()
         return
     #
     # props
     #
+    @property
+    def output(self):
+        """ the output data """
+        return self._output
+    
     @property
     def outputFormatType(self):
         """ define output format type """
@@ -201,11 +214,11 @@ class warpTextOutput(warpFlatOutputHelpers):
                     elif obj_count in self.obj_nums:
                         # this object was requested! add to array
                         # split string and convert to double
-                        dummy = line.strip().split("  ")
-                        value = numpy.float64(dummy[self.data_index])
+                        dummy  = line.strip().split("  ")
+                        values = numpy.float64(dummy)[self.data_indices]
                         # insert into array
                         objind = self.obj_nums.index(obj_count)
-                        self.output[i,objind] = value
+                        self._output[i,objind,:] = values
                         # iterate completed
                         completed += 1
                         # check if all tasks completed
@@ -240,7 +253,7 @@ class warpStreamOutput(warpFlatOutputHelpers):
         self.num_vals_per_step = self.total_num_obj * self.total_num_cols
         
         # preallocate
-        self.output = numpy.zeros([self.nsteps,self.nobjs], dtype=numpy.float64)
+        self._output = numpy.zeros([self.nsteps,self.nobjs], dtype=numpy.float64)
         
         # execute
         self.getOutput()
@@ -249,6 +262,11 @@ class warpStreamOutput(warpFlatOutputHelpers):
     #
     # props
     #
+    @property
+    def output(self):
+        """ the output data """
+        return self._output
+    
     @property
     def outputFormatType(self):
         """ define output format type """
@@ -274,5 +292,5 @@ class warpStreamOutput(warpFlatOutputHelpers):
                 # insert desired values into array
                 for j, objnum in enumerate(self.obj_nums):
                     objind = objnum - 1 
-                    self.output[i,j] = data[objind,self.data_index]
+                    self._output[i,j] = data[objind,self.data_index]
         return
