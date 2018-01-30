@@ -2,22 +2,15 @@
 Vincente Pericoli
 UC Davis
 
-reader to get output from warp3d files.    
-quick and dirty
-
-to-do: 
-    * add ability to request multiple columns
-      of data, e.g. request displacement in 
-      both the x and y directions. Currently
-      you have to re-read the output file...
-      very inefficient.
+reader to get info about warp3d input files.
+quite dirty and inefficient, but gets the job done.
 """
 
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # imports
 #
-import os, fnmatch, numpy, scipy.io
+import numpy
 from reverse_readline import reverse_readline
 
 #
@@ -44,6 +37,20 @@ class WarpInputFile(object):
                 return
         raise Exception("Invalid input file-type.")
         return
+    
+    def __skip_line(self, line):
+        """ checks if the line should be skipped over (e.g. if it's a comment line) """
+        # skip line if...
+        if( "echo" in line ):
+            return True 
+        if( line[0:2] == "c "):
+            # comment character
+            return True
+        if( line[0:2] == "! "):
+            # comment character
+            return True
+        # otherwise
+        return False
         
     def read_incid(self):
         """ read element incidences """
@@ -68,7 +75,7 @@ class WarpInputFile(object):
                     # seek to incidences keyword
                     if( "incid" in line ):
                         readbool = True
-                    if( "echo" in line ):
+                    if( self.__skip_line(line) ):
                         continue
                     if( not readbool ):
                         continue
@@ -102,7 +109,7 @@ class WarpInputFile(object):
                 if( "incid" in line ):
                     readbool = True
                     continue
-                if( "echo" in line ):
+                if( self.__skip_line(line) ):
                     continue
                 if( not readbool ):
                     continue
@@ -147,15 +154,17 @@ class WarpInputFile(object):
                     # seek to coords keyword
                     if( "coord" in line ):
                         readbool = True
-                    if( "echo" in line ):
+                    if( self.__skip_line(line) ):
                         continue
                     if( not readbool ):
                         continue
+                        
                     # check for end of coords keyword
                     if( (line.strip() == "") or ("incid" in line) ):
                         break
                     # otherwise, keep track of the last line
                     last_line = line
+                    
             # use last line of coords to set size
             L = last_line.strip().split()
             nnod = int(L[0])
@@ -177,7 +186,7 @@ class WarpInputFile(object):
                 if( "coord" in line ):
                     readbool = True
                     continue
-                if( "echo" in line ):
+                if( self.__skip_line(line) ):
                     continue
                 if( not readbool ):
                     continue
@@ -199,5 +208,7 @@ class WarpInputFile(object):
         return
     
     def read_coords(self):
+        # equate names
         self.read_coord()
         return
+        
