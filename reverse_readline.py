@@ -3,6 +3,8 @@ Function to read file from end to beginning (i.e. in reverse).
 
 Taken from srohde, Andomar, and levesque from stackoverflow
 <https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python>
+
+License: CC BY-SA 3.0
 """
 
 import os

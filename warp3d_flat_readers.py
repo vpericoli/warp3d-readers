@@ -35,6 +35,11 @@ class warpFlatOutputHelpers(object):
     # properties
     #
     @property
+    def output(self):
+        """ the output data """
+        return self._output
+        
+    @property
     def output_dir(self):
         return self._output_dir
     @output_dir.setter
@@ -109,7 +114,8 @@ class warpFlatOutputHelpers(object):
         template_dict = {"stress"         : "wes{:05d}_" + fmt,
                          "reaction"       : "wnr{:05d}_" + fmt,
                          "displacement"   : "wnd{:05d}_" + fmt,
-                         "cohesive_state" : "wem{:05d}_" + fmt + "_cohesive"}
+                         "cohesive_state" : "wem{:05d}_" + fmt + "_cohesive",
+                         "bilinear_state" : "wem{:05d}_" + fmt + "_bilinear"}
         if not (self.output_type in template_dict.keys()):
             raise RuntimeError("Invalid output_type")
         return template_dict[self.output_type]
@@ -120,7 +126,7 @@ class warpFlatOutputHelpers(object):
 
     def sumOutput(self):
         """ implicitly assumed that we want to sum objects accross step """
-        self.output = self.output.sum(axis=1,keepdims=True)
+        self._output = self._output.sum(axis=1,keepdims=True)
         return
         
     def writeCSVOutput(self, filename, header, array):
@@ -183,11 +189,6 @@ class warpTextOutput(warpFlatOutputHelpers):
     #
     # props
     #
-    @property
-    def output(self):
-        """ the output data """
-        return self._output
-    
     @property
     def outputFormatType(self):
         """ define output format type """
@@ -262,11 +263,6 @@ class warpStreamOutput(warpFlatOutputHelpers):
     #
     # props
     #
-    @property
-    def output(self):
-        """ the output data """
-        return self._output
-    
     @property
     def outputFormatType(self):
         """ define output format type """
