@@ -1,3 +1,44 @@
+C   ================================================================================
+C   packet_reader license
+C   ================================================================================
+C   University of Illinois/NCSA
+C   Open Source License
+C   
+C   Copyright (c) 2011 University of Illinois at Urbana-Champaign
+C   All rights reserved.
+C   
+C   Developed by:
+C         Professor Robert H. Dodds, Jr. & Research Group
+C         University of Illinois at Urbana-Champaign
+C         http://cee.illinois.edu/faculty/robertdodds
+C   
+C   Permission is hereby granted, free of charge, to any person obtaining a copy of
+C   this software and associated documentation files (the "Software"), to deal with
+C   the Software without restriction, including without limitation the rights to
+C   use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+C   of the Software, and to permit persons to whom the Software is furnished to do
+C   so, subject to the following conditions:
+C   
+C       * Redistributions of source code must retain the above copyright notice,
+C         this list of conditions and the following disclaimers.
+C       * Redistributions in binary form must reproduce the above copyright notice,
+C         this list of conditions and the following disclaimers in the
+C         documentation and/or other materials provided with the distribution.
+C       * Neither the names of the WARP3D Team, University of Illinois at
+C         Urbana-Champaign, nor the names of its contributors may be used to
+C         endorse or promote products derived from this Software without specific
+C         prior written permission. 
+C   
+C   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+C   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+C   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+C   CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+C   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+C   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
+C   SOFTWARE. 
+C   ================================================================================
+c 
+c
 c **********************************************************************
 c *                                                                    *
 c *     module: pvars                                                  *

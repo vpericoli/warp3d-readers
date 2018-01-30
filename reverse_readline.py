@@ -1,14 +1,14 @@
 """
-Function to read file from end to beginning (i.e. in reverse).
-
 Taken from srohde, Andomar, and levesque from stackoverflow
 <https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python>
 
 License: CC BY-SA 3.0
+For full license, please see: <https://creativecommons.org/licenses/by-sa/3.0/us/legalcode>
 """
 
 import os
 
+# Function to read file from end to beginning (i.e. in reverse).
 def reverse_readline(filename, buf_size=8192):
     """a generator that returns the lines of a file in reverse order"""
     with open(filename) as fh:

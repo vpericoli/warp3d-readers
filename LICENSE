@@ -1,0 +1,47 @@
+===================================================================================
+warp3d-pyreaders License
+===================================================================================
+Copyright (c) 2017-2018, The Regents of the University of California (The Regents)
+Copyright (c) 2017-2018, Vincente Pericoli
+All rights reserved.
+
+The Regents grants permission, without fee and without a written license agreement, for (a) use, 
+reproduction, modification, and distribution of this software and its documentation by educational, 
+research, and non-profit entities for noncommercial purposes only; and (b) use, reproduction and 
+modification of this software by other entities for internal purposes only. The above copyright 
+notice, this paragraph and the following three paragraphs must appear in all copies and modifications 
+of the software and/or documentation. Neither the names of the University of California, The Regents, 
+nor the names of its contributors may be used to endorse or promote products derived from this software
+without specific prior written permission.
+
+Permission to incorporate this software into products for commercial distribution may be obtained 
+by contacting the University of California Office of Research and Graduate Studies.
+
+This software program and documentation are copyrighted by The Regents of the University of California. 
+The Regents does not warrant that the operation of the program will be uninterrupted or error-free. The 
+end-user understands that the program was developed for research purposes and is advised not to rely 
+exclusively on the program for any reason.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===================================================================================
+Copyrights and Licenses for Third Party Software Distributed with warp3d-pyreaders
+===================================================================================
+The warp3d-pyreaders software contains code written by third parties.  Such software
+will have its own individual license, which is reproduced in code comments in the 
+respective source files. Alternative copyrights, license, and restrictions will 
+apply to this code, as described by the respective license. 
+
+The disclaimer of warranty in the warp3d-pyreaders License applies to all code in the 
+warp3d-pyreaders Distribution. Nothing in any of the other licenses gives permission 
+to use the names of the warp3d-pyreaders Team or the University of California to endorse 
+or promote products derived from this Software.
